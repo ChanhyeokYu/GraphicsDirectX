@@ -53,6 +53,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 		return -1;
 	}
 
+	renderer.CreateTriangleResources();
+
 	ShowWindow(hWnd, nCmdShow);
 
 	
@@ -67,6 +69,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 		}
 
 		renderer.ClearScreen(1.0f, 1.0f, 1.0f, 1.0f);
+		renderer.DrawTriangle();
 		renderer.Present();
 	}
 

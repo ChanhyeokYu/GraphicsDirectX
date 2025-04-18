@@ -1,5 +1,6 @@
 #include "D3DRenderer.h"
 
+
 bool D3DRenderer::Init(HWND hWnd)
 {
 	DXGI_SWAP_CHAIN_DESC scd = {}; // 스왑 체인의 정보를 담을 구조체 선언
@@ -41,4 +42,47 @@ void D3DRenderer::ClearScreen(float r, float g, float b, float a)
 void D3DRenderer::Present()
 {
 	swapChain->Present(1, 0);// 화면에 표시
+}
+
+bool D3DRenderer::CreateTriangleResources()
+{
+	// 정점 데이터 정의
+	Vertex vertices[] = {
+		{ 0.0f,   0.5f,  0.0f,   1.0f, 0.0f, 0.0f},
+		{ 0.5f,  -0.5f,  0.0f,   1.0f, 1.0f, 0.0f},
+		{-0.5f,  -0.5f,  0.0f,   0.0f, 0.0f, 1.0f},
+	};
+
+	// 버퍼 설정
+	CD3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(vertices);
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	// 버퍼 데이터 지정
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = vertices;
+
+	HRESULT hr = device->CreateBuffer(&bd, &initData, &vertexBuffer);
+
+	return SUCCEEDED(hr);
+}
+
+void D3DRenderer::DrawTriangle()
+{
+	// 정점 버퍼 바인딩
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+
+	// 입력 레이아웃 설정
+	context->IASetInputLayout(inputLayout.Get());
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// 셰이더 바인딩
+	context->VSSetShader(vertexShader.Get(), nullptr, 0);
+	context->PSSetShader(pixelShader.Get(), nullptr, 0);
+
+	context->Draw(3, 0);
+
 }
