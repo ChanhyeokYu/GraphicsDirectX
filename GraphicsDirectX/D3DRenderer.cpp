@@ -1,10 +1,17 @@
 #include "D3DRenderer.h"
+#include <d3dcompiler.h>
+#include <assert.h>
 
-#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "d3dcompiler")
 
 
 bool D3DRenderer::Init(HWND hWnd)
 {
+	UINT flags = 0;
+#if defined(_DEBUG)
+	flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif // defined(_DEBUG)
+
 	DXGI_SWAP_CHAIN_DESC scd = {}; // 스왑 체인의 정보를 담을 구조체 선언
 	scd.BufferCount = 1;
 	scd.BufferDesc.Width = 800;
@@ -16,7 +23,7 @@ bool D3DRenderer::Init(HWND hWnd)
 	scd.Windowed = TRUE;
 	scd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD; // 스왑 후 활동. 해당 활동은 스왑 후 백버퍼의 내용을 버림
 
-	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &scd, &swapChain, &device, nullptr, &context);
+	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, nullptr, 0, D3D11_SDK_VERSION, &scd, &swapChain, &device, nullptr, &context);
 
 	if (FAILED(hr))
 	{
@@ -31,6 +38,16 @@ bool D3DRenderer::Init(HWND hWnd)
 
 	//랜더 타켓 바인딩
 	context->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), nullptr); //디바이스가 보고 있는 타겟에 랜더링 명령
+
+	D3D11_VIEWPORT viewport = {};
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = 800;
+	viewport.Height = 600;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	context->RSSetViewports(1, &viewport);
 
 	return true;
 }
@@ -72,10 +89,39 @@ bool D3DRenderer::CreateTriangleResources()
 		return false;	
 	}
 
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBolob;
-	hr = D3DCompilefromFile
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob;
+	hr = D3DCompileFromFile(L"Shader.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", 0, 0, &vsBlob, nullptr);
+	if (FAILED(hr))
+	{
+		return false;
+	}
 
-	return SUCCEEDED(hr);
+	device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &vertexShader);
+
+	Microsoft::WRL::ComPtr<ID3DBlob> psBlob;
+	hr = D3DCompileFromFile(L"Shader.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", 0, 0, &psBlob, nullptr);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pixelShader);
+
+	D3D11_INPUT_ELEMENT_DESC layout[] =
+	{
+		{ "POSITION", 0,  DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} ,
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+	UINT numElements = ARRAYSIZE(layout);
+
+	hr = device->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	return true;
+
 }
 
 void D3DRenderer::DrawTriangle()
@@ -92,6 +138,12 @@ void D3DRenderer::DrawTriangle()
 	// 셰이더 바인딩
 	context->VSSetShader(vertexShader.Get(), nullptr, 0);
 	context->PSSetShader(pixelShader.Get(), nullptr, 0);
+
+	assert(vertexBuffer.Get() != nullptr);
+	assert(vertexShader.Get() != nullptr);
+	assert(pixelShader.Get() != nullptr);
+	assert(inputLayout.Get() != nullptr);
+
 
 	context->Draw(3, 0);
 
