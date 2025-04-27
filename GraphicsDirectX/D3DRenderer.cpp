@@ -1,5 +1,7 @@
 #include "D3DRenderer.h"
 
+#pragma comment(lib, "d3dcompiler.lib")
+
 
 bool D3DRenderer::Init(HWND hWnd)
 {
@@ -64,6 +66,14 @@ bool D3DRenderer::CreateTriangleResources()
 	initData.pSysMem = vertices;
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &vertexBuffer);
+	
+	if (FAILED(hr))
+	{
+		return false;	
+	}
+
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBolob;
+	hr = D3DCompilefromFile
 
 	return SUCCEEDED(hr);
 }
