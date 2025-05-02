@@ -39,6 +39,7 @@ bool D3DRenderer::Init(HWND hWnd)
 	//랜더 타켓 바인딩
 	context->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), nullptr); //디바이스가 보고 있는 타겟에 랜더링 명령
 
+	// D11 부터 뷰포트를 넣어줘야함
 	D3D11_VIEWPORT viewport = {};
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;

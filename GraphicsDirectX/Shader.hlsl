@@ -1,4 +1,5 @@
 // Vertex Shader
+// 정점 위치 계산
 struct VS_IN
 {
     float3 pos : POSITION;
@@ -20,6 +21,7 @@ PS_IN VSMain(VS_IN input)
 };
 
 //Pixel Shader
+// 최종 색상 결정
 float4 PSMain(PS_IN input) : SV_TARGET
 {
     return float4(input.color, 1.0f);

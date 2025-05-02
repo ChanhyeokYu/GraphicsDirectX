@@ -57,7 +57,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 
 	ShowWindow(hWnd, nCmdShow);
 
-	
 
 	MSG msg = {};
 	while (msg.message != WM_QUIT)
@@ -71,6 +70,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 		renderer.ClearScreen(0.05f, 0.05f, 0.05f, 1.0f);
 		renderer.DrawTriangle();
 		renderer.Present();
+
 	}
 
 	return 0;
