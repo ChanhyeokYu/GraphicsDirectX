@@ -1,3 +1,8 @@
+cbuffer TransformBuffer : register(b0)
+{
+    matrix worldViewProj;
+};
+
 // Vertex Shader
 // 정점 위치 계산
 struct VS_IN
@@ -15,7 +20,7 @@ struct PS_IN
 PS_IN VSMain(VS_IN input)
 {
     PS_IN output;
-    output.pos = float4(input.pos, 1.0f);
+    output.pos = mul(float4(input.pos, 1.0f), worldViewProj);
     output.color = input.color;
     return output;
 };

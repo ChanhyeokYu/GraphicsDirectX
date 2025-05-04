@@ -4,6 +4,8 @@
 
 #pragma comment(lib, "d3dcompiler")
 
+using namespace DirectX;
+
 
 bool D3DRenderer::Init(HWND hWnd)
 {
@@ -49,6 +51,8 @@ bool D3DRenderer::Init(HWND hWnd)
 	viewport.MaxDepth = 1.0f;
 
 	context->RSSetViewports(1, &viewport);
+
+	CreateConstantBuffer();
 
 	return true;
 }
@@ -125,6 +129,18 @@ bool D3DRenderer::CreateTriangleResources()
 
 }
 
+bool D3DRenderer::CreateConstantBuffer()
+{
+	D3D11_BUFFER_DESC cbd = {};
+	cbd.Usage = D3D11_USAGE_DEFAULT;
+	cbd.ByteWidth = sizeof(XMMATRIX);
+	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+	HRESULT hr = device->CreateBuffer(&cbd, nullptr, &constantBuffer);
+
+	return SUCCEEDED(hr);
+}
+
 void D3DRenderer::DrawTriangle()
 {
 	// 정점 버퍼 바인딩
@@ -148,4 +164,10 @@ void D3DRenderer::DrawTriangle()
 
 	context->Draw(3, 0);
 
+}
+
+void D3DRenderer::SetTransform(const DirectX::XMMATRIX& matrix)
+{
+	context->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &matrix, 0, 0);
+	context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 }

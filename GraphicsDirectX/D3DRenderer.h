@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d11.h>
 #include <wrl.h>
+#include <DirectXMath.h>
 
 // 중요점은 스왑 체인을 이용해 지속적으로 백퍼버 -> 프론트 버퍼을 교체하면서 끊김 없이 화면에 출력하는 것
 
@@ -17,8 +18,11 @@ public:
 	void ClearScreen(float r, float g, float b, float a); // 배경 색상 클리어
 	void Present(); // 출력
 	bool CreateTriangleResources();
+	bool CreateConstantBuffer();
 
 	void DrawTriangle();
+
+	void SetTransform(const DirectX::XMMATRIX& matrix);
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Device> device; // GPU 디바이스
@@ -29,6 +33,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
 
 };
 

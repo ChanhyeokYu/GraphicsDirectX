@@ -1,5 +1,6 @@
 ﻿#include "targetver.h" // 현재 설치된 가장 최신의 SDK 버전을 사용하겠다는 선언
 #include <Windows.h>
+
 #include "D3DRenderer.h"
 
 D3DRenderer renderer;
@@ -66,6 +67,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+
+		static float angle = 0.0f;
+		angle += 0.01;
+
+		DirectX::XMMATRIX world = DirectX::XMMatrixRotationZ(angle);
+		DirectX::XMMATRIX view = DirectX::XMMatrixIdentity();
+		DirectX::XMMATRIX proj = DirectX::XMMatrixOrthographicLH(2.0f, 2.0f * 600.0f / 800.0f, 0.1f, 100.0f);
+
+		DirectX::XMMATRIX worldViewProj = world * view * proj;
+
+		renderer.SetTransform(worldViewProj);
 
 		renderer.ClearScreen(0.05f, 0.05f, 0.05f, 1.0f);
 		renderer.DrawTriangle();
