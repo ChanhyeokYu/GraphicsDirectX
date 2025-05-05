@@ -41,6 +41,10 @@ bool D3DRenderer::Init(HWND hWnd)
 	//랜더 타켓 바인딩
 	context->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), nullptr); //디바이스가 보고 있는 타겟에 랜더링 명령
 
+	// 셰이더 바인딩
+	context->PSSetShaderResources(0, 1, textureView.GetAddressOf());
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
 	// D11 부터 뷰포트를 넣어줘야함
 	D3D11_VIEWPORT viewport = {};
 	viewport.TopLeftX = 0;
@@ -72,9 +76,9 @@ bool D3DRenderer::CreateTriangleResources()
 {
 	// 정점 데이터 정의
 	Vertex vertices[] = {
-		{ 0.0f,   0.5f,  0.0f,   1.0f, 0.0f, 0.0f},
-		{ 0.5f,  -0.5f,  0.0f,   1.0f, 1.0f, 0.0f},
-		{-0.5f,  -0.5f,  0.0f,   0.0f, 0.0f, 1.0f},
+		{ 0.0f,   0.5f,  0.0f,   0.5f, 0.0f},
+		{ 0.5f,  -0.5f,  0.0f,   1.0f, 1.0f},
+		{-0.5f,  -0.5f,  0.0f,   0.0f, 1.0f},
 	};
 
 	// 버퍼 설정
@@ -115,7 +119,7 @@ bool D3DRenderer::CreateTriangleResources()
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION", 0,  DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} ,
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "TEXTCODE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	UINT numElements = ARRAYSIZE(layout);
 
@@ -138,6 +142,18 @@ bool D3DRenderer::CreateConstantBuffer()
 
 	HRESULT hr = device->CreateBuffer(&cbd, nullptr, &constantBuffer);
 
+	return SUCCEEDED(hr);
+}
+
+bool D3DRenderer::CreateSampler()
+{
+	D3D11_SAMPLER_DESC desc = {};
+	desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+	HRESULT hr = device->CreateSamplerState(&desc, &samplerState);
 	return SUCCEEDED(hr);
 }
 
@@ -164,6 +180,13 @@ void D3DRenderer::DrawTriangle()
 
 	context->Draw(3, 0);
 
+}
+
+bool D3DRenderer::LoadTexture(const std::wstring& filename)
+{
+	HRESULT hr = DirectX::CreateWICTextureFromFile(device.Get(), context.Get(), filename.c_str(), nullptr, &textureView);
+	return SUCCEEDED(hr);
+	//return false;
 }
 
 void D3DRenderer::SetTransform(const DirectX::XMMATRIX& matrix)

@@ -1,3 +1,6 @@
+Texture2D tex0 : register(t0);
+SamplerState samliner : register(s0);
+
 cbuffer TransformBuffer : register(b0)
 {
     matrix worldViewProj;
@@ -8,20 +11,20 @@ cbuffer TransformBuffer : register(b0)
 struct VS_IN
 {
     float3 pos : POSITION;
-    float3 color : COLOR;
+    float2 uv : TEXCOORD;
 };
 
 struct PS_IN
 {
     float4 pos : SV_POSITION;
-    float3 color : COLOR;
+    float2 uv : TEXCOORD;
 };
 
 PS_IN VSMain(VS_IN input)
 {
     PS_IN output;
     output.pos = mul(float4(input.pos, 1.0f), worldViewProj);
-    output.color = input.color;
+    output.uv = input.uv;
     return output;
 };
 
@@ -29,5 +32,5 @@ PS_IN VSMain(VS_IN input)
 // 최종 색상 결정
 float4 PSMain(PS_IN input) : SV_TARGET
 {
-    return float4(input.color, 1.0f);
+    return tex0.Sample(samliner, input.uv);
 };

@@ -68,7 +68,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 			DispatchMessage(&msg);
 		}
 
-		static float angle = 0.0f;
+		/*static float angle = 0.0f;
 		angle += 0.01;
 
 		DirectX::XMMATRIX world = DirectX::XMMatrixRotationZ(angle);
@@ -77,7 +77,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 
 		DirectX::XMMATRIX worldViewProj = world * view * proj;
 
-		renderer.SetTransform(worldViewProj);
+		renderer.SetTransform(worldViewProj);*/
+
+
 
 		renderer.ClearScreen(0.05f, 0.05f, 0.05f, 1.0f);
 		renderer.DrawTriangle();
