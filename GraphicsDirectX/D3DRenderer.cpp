@@ -61,6 +61,7 @@ bool D3DRenderer::Init(HWND hWnd)
 	context->RSSetViewports(1, &viewport);
 
 	CreateConstantBuffer();
+	CreateVertexBuffer();
 
 	return true;
 }
@@ -79,10 +80,11 @@ void D3DRenderer::Present()
 bool D3DRenderer::CreateTriangleResources()
 {
 	// 정점 데이터 정의
-	Vertex vertices[] = {
-		{ 0.0f,   0.5f,  0.0f,   0.5f, 0.0f},
-		{ 0.5f,  -0.5f,  0.0f,   1.0f, 1.0f},
-		{-0.5f,  -0.5f,  0.0f,   0.0f, 1.0f},
+	Vertex vertices[] =
+	{
+		{ {0.0f,   0.5f,  0.0f}, { 0.5f, 0.0f }},
+		{ {0.5f,  -0.5f,  0.0f},   {1.0f, 1.0f}},
+		{{-0.5f,  -0.5f,  0.0f},   {0.0f, 1.0f}},
 	};
 
 	// 버퍼 설정
@@ -139,24 +141,37 @@ bool D3DRenderer::CreateTriangleResources()
 
 bool D3DRenderer::CreateConstantBuffer()
 {
-
-	Vertex vertices[] = {
-	{ 0.0f,   0.5f,  0.0f,   0.5f, 0.0f},
-	{ 0.5f,  -0.5f,  0.0f,   1.0f, 1.0f},
-	{-0.5f,  -0.5f,  0.0f,   0.0f, 1.0f},
-	};
-
 	D3D11_BUFFER_DESC cbd = {};
 	cbd.Usage = D3D11_USAGE_DEFAULT;
-	cbd.ByteWidth = sizeof(vertices);
+	cbd.ByteWidth = sizeof(CBMatrix);
 	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA initData = {};
-	initData.pSysMem = vertices;
 
 	HRESULT hr = device->CreateBuffer(&cbd, nullptr, &constantBuffer);
 
 	return SUCCEEDED(hr);
+}
+
+bool D3DRenderer::CreateVertexBuffer()
+{
+	Vertex vertices[] =
+	{
+		{ {  0.0f,  0.5f, 0.0f }, { 0.5f, 0.0f } },
+		{ {  0.5f, -0.5f, 0.0f }, { 1.0f, 1.0f } },
+		{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f } },
+	};
+
+	D3D11_BUFFER_DESC vbd = {};
+	vbd.Usage = D3D11_USAGE_DEFAULT;
+	vbd.ByteWidth = sizeof(vertices);
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA iniData = {};
+	iniData.pSysMem = vertices;
+
+	HRESULT hr = device->CreateBuffer(&vbd, nullptr, &vertexBuffer);
+
+	return SUCCEEDED(hr);
+
 }
 
 bool D3DRenderer::CreateSampler()
@@ -213,4 +228,63 @@ void D3DRenderer::SetTransform(const DirectX::XMMATRIX& matrix)
 {
 	context->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &matrix, 0, 0);
 	context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+}
+
+void D3DRenderer::SetPipeline()
+{
+	UINT stirde = sizeof(Vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stirde, &offset);
+
+	HRESULT hr;
+
+	/*if (FAILED(hr))
+	{
+		return ;
+	}*/
+
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob;
+	hr = D3DCompileFromFile(L"Shader.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", 0, 0, &vsBlob, nullptr);
+	if (FAILED(hr))
+	{
+		return ;
+	}
+
+	device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &vertexShader);
+
+	Microsoft::WRL::ComPtr<ID3DBlob> psBlob;
+	hr = D3DCompileFromFile(L"Shader.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", 0, 0, &psBlob, nullptr);
+	if (FAILED(hr))
+	{
+		return ;
+	}
+
+	device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pixelShader);
+
+	D3D11_INPUT_ELEMENT_DESC layout[] =
+	{
+		{ "POSITION", 0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} ,
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+	UINT numElements = ARRAYSIZE(layout);
+
+	hr = device->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
+	if (FAILED(hr))
+	{
+		return;
+	}
+
+	CBMatrix cb = {};
+	cb.world = XMMatrixIdentity();
+	cb.view = XMMatrixIdentity();
+	cb.projection = XMMatrixOrthographicLH(800, 600, 0.1f, 100.0f);
+
+	context->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
+	context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+
+	context->PSSetShaderResources(0, 1, &textureView);
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
+	context->Draw(3,0);
+
 }

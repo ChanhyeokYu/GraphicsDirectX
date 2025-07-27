@@ -10,8 +10,15 @@
 
 struct Vertex
 {
-	float x, y, z; // 위치 값
-	float u, v;
+	DirectX::XMFLOAT3 pos;
+	DirectX::XMFLOAT2 uv;
+};
+
+struct CBMatrix
+{
+	DirectX::XMMATRIX world;
+	DirectX::XMMATRIX view;
+	DirectX::XMMATRIX projection;
 };
 
 class D3DRenderer
@@ -21,13 +28,16 @@ public:
 	void ClearScreen(float r, float g, float b, float a); // 배경 색상 클리어
 	void Present(); // 출력
 	bool CreateTriangleResources();
-	bool CreateConstantBuffer();
 	bool CreateSampler();
+
+	bool CreateConstantBuffer();
+	bool CreateVertexBuffer();
 
 	void DrawTriangle();
 	bool LoadTexture(const std::wstring& filename);
 
 	void SetTransform(const DirectX::XMMATRIX& matrix);
+	void SetPipeline();
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Device> device; // GPU 디바이스

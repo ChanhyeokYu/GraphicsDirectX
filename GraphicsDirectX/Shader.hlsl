@@ -20,10 +20,19 @@ struct PS_IN
     float2 uv : TEXCOORD;
 };
 
+cbuffer CBMatrix : register(b0)
+{
+    matrix world;
+    matrix view;
+    matrix projection;  
+}
+
 PS_IN VSMain(VS_IN input)
 {
     PS_IN output;
-    output.pos = mul(float4(input.pos, 1.0f), worldViewProj);
+    float4 worldPos = mul(float4(input.pos, 1.0f), world);
+    float4 viewPos = mul(worldPos, view);
+    output.pos = mul(viewPos, projection);
     output.uv = input.uv;
     return output;
 };

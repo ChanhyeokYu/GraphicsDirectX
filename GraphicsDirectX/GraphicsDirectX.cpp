@@ -93,7 +93,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 
 
 		renderer.ClearScreen(0.05f, 0.05f, 0.05f, 1.0f);
-		renderer.DrawTriangle();
+		//renderer.DrawTriangle();
+		renderer.SetPipeline();
+
 		renderer.Present();
 
 	}
