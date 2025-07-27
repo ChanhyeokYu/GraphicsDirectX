@@ -2,6 +2,10 @@
 #include <d3dcompiler.h>
 #include <assert.h>
 
+#include <d3d11.h>
+#include <wrl/client.h>
+#include <DirectXMath.h>
+
 #pragma comment(lib, "d3dcompiler")
 
 using namespace DirectX;
@@ -40,10 +44,6 @@ bool D3DRenderer::Init(HWND hWnd)
 
 	//랜더 타켓 바인딩
 	context->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), nullptr); //디바이스가 보고 있는 타겟에 랜더링 명령
-
-	// 셰이더 바인딩
-	context->PSSetShaderResources(0, 1, textureView.GetAddressOf());
-	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 	// D11 부터 뷰포트를 넣어줘야함
 	D3D11_VIEWPORT viewport = {};
@@ -159,6 +159,10 @@ bool D3DRenderer::CreateSampler()
 
 void D3DRenderer::DrawTriangle()
 {
+	// 텍스처 바인딩
+	context->PSSetShaderResources(0, 1, textureView.GetAddressOf());
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
 	// 정점 버퍼 바인딩
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -185,6 +189,8 @@ void D3DRenderer::DrawTriangle()
 bool D3DRenderer::LoadTexture(const std::wstring& filename)
 {
 	HRESULT hr = DirectX::CreateWICTextureFromFile(device.Get(), context.Get(), filename.c_str(), nullptr, &textureView);
+	std::wstring error = std::to_wstring(hr);
+	OutputDebugString(error.c_str());
 	return SUCCEEDED(hr);
 	//return false;
 }

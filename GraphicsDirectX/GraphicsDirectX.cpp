@@ -54,6 +54,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 		return -1;
 	}
 
+	if (!renderer.LoadTexture(L"test.png"))
+	{
+		return -1;
+	}
+
+
+	if (!renderer.CreateSampler())
+	{
+		return -1;
+	}
+
+
 	renderer.CreateTriangleResources();
 
 	ShowWindow(hWnd, nCmdShow);
@@ -78,7 +90,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR,
 		DirectX::XMMATRIX worldViewProj = world * view * proj;
 
 		renderer.SetTransform(worldViewProj);*/
-
 
 
 		renderer.ClearScreen(0.05f, 0.05f, 0.05f, 1.0f);
