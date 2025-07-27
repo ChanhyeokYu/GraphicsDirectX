@@ -5,6 +5,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <DirectXMath.h>
+#include <combaseapi.h>
 
 #pragma comment(lib, "d3dcompiler")
 
@@ -17,6 +18,9 @@ bool D3DRenderer::Init(HWND hWnd)
 #if defined(_DEBUG)
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif // defined(_DEBUG)
+
+	CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+
 
 	DXGI_SWAP_CHAIN_DESC scd = {}; // 스왑 체인의 정보를 담을 구조체 선언
 	scd.BufferCount = 1;
@@ -119,7 +123,7 @@ bool D3DRenderer::CreateTriangleResources()
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION", 0,  DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} ,
-		{ "TEXTCODE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	UINT numElements = ARRAYSIZE(layout);
 
@@ -135,10 +139,20 @@ bool D3DRenderer::CreateTriangleResources()
 
 bool D3DRenderer::CreateConstantBuffer()
 {
+
+	Vertex vertices[] = {
+	{ 0.0f,   0.5f,  0.0f,   0.5f, 0.0f},
+	{ 0.5f,  -0.5f,  0.0f,   1.0f, 1.0f},
+	{-0.5f,  -0.5f,  0.0f,   0.0f, 1.0f},
+	};
+
 	D3D11_BUFFER_DESC cbd = {};
 	cbd.Usage = D3D11_USAGE_DEFAULT;
-	cbd.ByteWidth = sizeof(XMMATRIX);
+	cbd.ByteWidth = sizeof(vertices);
 	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = vertices;
 
 	HRESULT hr = device->CreateBuffer(&cbd, nullptr, &constantBuffer);
 
