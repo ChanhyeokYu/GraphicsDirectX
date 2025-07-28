@@ -61,7 +61,8 @@ bool D3DRenderer::Init(HWND hWnd)
 	context->RSSetViewports(1, &viewport);
 
 	CreateConstantBuffer();
-	CreateVertexBuffer();
+	//CreateVertexBuffer();
+	CreateTriangleResources();
 
 	return true;
 }
@@ -124,8 +125,8 @@ bool D3DRenderer::CreateTriangleResources()
 
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
-		{ "POSITION", 0,  DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} ,
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "POSITION",    0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,																	D3D11_INPUT_PER_VERTEX_DATA, 0} ,
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	   , 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	UINT numElements = ARRAYSIZE(layout);
 
@@ -155,9 +156,9 @@ bool D3DRenderer::CreateVertexBuffer()
 {
 	Vertex vertices[] =
 	{
-		{ {  0.0f,  0.5f, 0.0f }, { 0.5f, 0.0f } },
-		{ {  0.5f, -0.5f, 0.0f }, { 1.0f, 1.0f } },
-		{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f } },
+		{ {  0.0f,  0.5f, 0.5f }, { 0.5f, 0.0f } },
+		{ {  0.5f, -0.5f, 0.5f }, { 1.0f, 1.0f } },
+		{ { -0.5f, -0.5f, 0.5f }, { 0.0f, 1.0f } },
 	};
 
 	D3D11_BUFFER_DESC vbd = {};
@@ -217,7 +218,8 @@ void D3DRenderer::DrawTriangle()
 
 bool D3DRenderer::LoadTexture(const std::wstring& filename)
 {
-	HRESULT hr = DirectX::CreateWICTextureFromFile(device.Get(), context.Get(), filename.c_str(), nullptr, &textureView);
+
+	HRESULT hr = DirectX::CreateWICTextureFromFile(device.Get(), context.Get(),filename.c_str(), nullptr, &textureView);
 	std::wstring error = std::to_wstring(hr);
 	OutputDebugString(error.c_str());
 	return SUCCEEDED(hr);
@@ -226,24 +228,27 @@ bool D3DRenderer::LoadTexture(const std::wstring& filename)
 
 void D3DRenderer::SetTransform(const DirectX::XMMATRIX& matrix)
 {
-	context->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &matrix, 0, 0);
-	context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+	/*context->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &matrix, 0, 0);
+	context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());*/
 }
 
 void D3DRenderer::SetPipeline()
 {
-	UINT stirde = sizeof(Vertex);
-	UINT offset = 0;
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stirde, &offset);
+	context->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), nullptr); //디바이스가 보고 있는 타겟에 랜더링 명령
 
-	HRESULT hr;
+	/*UINT stirde = sizeof(Vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stirde, &offset);*/
+
+	//HRESULT hr;
+
 
 	/*if (FAILED(hr))
 	{
 		return ;
 	}*/
 
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob;
+	/*Microsoft::WRL::ComPtr<ID3DBlob> vsBlob;
 	hr = D3DCompileFromFile(L"Shader.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", 0, 0, &vsBlob, nullptr);
 	if (FAILED(hr))
 	{
@@ -263,8 +268,8 @@ void D3DRenderer::SetPipeline()
 
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
-		{ "POSITION", 0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} ,
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "POSITION",    0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,																	D3D11_INPUT_PER_VERTEX_DATA, 0} ,
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	   , 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	UINT numElements = ARRAYSIZE(layout);
 
@@ -272,7 +277,7 @@ void D3DRenderer::SetPipeline()
 	if (FAILED(hr))
 	{
 		return;
-	}
+	}*/
 
 	CBMatrix cb = {};
 	cb.world = XMMatrixIdentity();
@@ -282,9 +287,16 @@ void D3DRenderer::SetPipeline()
 	context->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 
-	context->PSSetShaderResources(0, 1, &textureView);
+	/*context->PSSetShaderResources(0, 1, textureView.GetAddressOf());
 	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
-	context->Draw(3,0);
+	context->IASetInputLayout(inputLayout.Get());
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	context->VSSetShader(vertexShader.Get(), nullptr, 0);
+	context->PSSetShader(pixelShader.Get(), nullptr, 0);
+
+	assert(textureView.Get() != nullptr);
+
+	context->Draw(3,0);*/
 
 }
